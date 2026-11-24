@@ -1,4 +1,4 @@
-import { mult, translate, rotateX, rotateY, rotateZ, scalem } from "./libs/MV.js";
+import { mult, translate, rotateX, rotateY, rotateZ, scalem,inverse } from "./libs/MV.js";
 import * as STACK from "./libs/stack.js";
 
 /**
@@ -41,7 +41,29 @@ export function transform(n) {
     const { scale: s, rotation: r, translation: t } = n.transform;
     return mult(translate(t), mult(rotateZ(r[2]), mult(rotateY(r[1]), mult(rotateX(r[0]), scalem(s)))));
 }
+export function world(n) {
+    if (n.parent === null) {
+        return transform(n);
+    }
 
+    return mult(world(n.parent), transform(n));
+}
+export function to_local(n, p) {
+    return mult(inverse(world(n)), p);
+}
+export function reparent(n, newParent) {
+
+    const oldParent = n.parent;
+
+    if (oldParent !== null) {
+        const index = oldParent.children.indexOf(n);
+        oldParent.children.splice(index, 1);
+    }
+
+    newParent.children.push(n);
+
+    n.parent = newParent;
+}
 export function find(root, name) {
     if (root.name == name) return root;
     for (const c of root.children) {
